@@ -1,0 +1,24 @@
+# Environment files - never commit these
+backend/.env
+frontend/.env.local
+
+# SQLite database
+backend/*.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Next.js
+frontend/.next/
+frontend/out/
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
