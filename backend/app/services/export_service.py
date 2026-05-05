@@ -37,13 +37,13 @@ def generate_docx(body_text: str, company: str | None, role: str | None) -> byte
         section.top_margin = section.bottom_margin = Pt(72)
         section.left_margin = section.right_margin = Pt(72)
 
-    def add(text: str = "", bold: bool = False, size: int = 11, color: RGBColor | None = None, align=WD_ALIGN_PARAGRAPH.LEFT) -> None:
+    def add(text: str = "", bold: bool = False, size: int = 12, color: RGBColor | None = None, align=WD_ALIGN_PARAGRAPH.LEFT) -> None:
         p = doc.add_paragraph()
         p.alignment = align
         run = p.add_run(text)
         run.bold = bold
         run.font.size = Pt(size)
-        run.font.name = "Calibri"
+        run.font.name = "Times New Roman"
         if color:
             run.font.color.rgb = color
         p.paragraph_format.space_after = Pt(0)
@@ -61,8 +61,8 @@ def generate_docx(body_text: str, company: str | None, role: str | None) -> byte
         # Add preceding text
         if para_text:
             run = p.add_run(para_text)
-            run.font.size = Pt(11)
-            run.font.name = "Calibri"
+            run.font.size = Pt(12)
+            run.font.name = "Times New Roman"
 
         # Hyperlink element
         part = doc.part
@@ -104,7 +104,7 @@ def generate_docx(body_text: str, company: str | None, role: str | None) -> byte
         rStyle.set(qn("w:val"), "Hyperlink")
         rPr.append(rStyle)
         f_size = OxmlElement("w:sz")
-        f_size.set(qn("w:val"), "22")
+        f_size.set(qn("w:val"), "24")
         rPr.append(f_size)
         new_run.append(rPr)
         t = OxmlElement("w:t")
@@ -115,8 +115,8 @@ def generate_docx(body_text: str, company: str | None, role: str | None) -> byte
 
     _add_hyperlink_run(p, HEADER["github_url"], HEADER["github_label"])
     sep = p.add_run(" | ")
-    sep.font.size = Pt(11)
-    sep.font.name = "Calibri"
+    sep.font.size = Pt(12)
+    sep.font.name = "Times New Roman"
     _add_hyperlink_run(p, HEADER["linkedin_url"], HEADER["linkedin_label"])
 
     add(_today())
@@ -133,8 +133,8 @@ def generate_docx(body_text: str, company: str | None, role: str | None) -> byte
             p.paragraph_format.space_after = Pt(6)
             p.paragraph_format.space_before = Pt(0)
             run = p.add_run(stripped)
-            run.font.size = Pt(11)
-            run.font.name = "Calibri"
+            run.font.size = Pt(12)
+            run.font.name = "Times New Roman"
 
     add()
     add("Sincerely,")
@@ -163,12 +163,12 @@ def generate_pdf(body_text: str, company: str | None, role: str | None) -> bytes
     styles = getSampleStyleSheet()
     normal = styles["Normal"]
 
-    name_style = ParagraphStyle("name", parent=normal, fontSize=14, leading=18, fontName="Helvetica-Bold", spaceAfter=2)
-    header_style = ParagraphStyle("header", parent=normal, fontSize=11, leading=14, fontName="Helvetica", spaceAfter=1)
-    link_style = ParagraphStyle("link", parent=normal, fontSize=11, leading=14, fontName="Helvetica", textColor=(0.1, 0.4, 0.8), spaceAfter=1)
-    date_style = ParagraphStyle("date", parent=normal, fontSize=11, leading=14, fontName="Helvetica", spaceAfter=6)
-    body_style = ParagraphStyle("body", parent=normal, fontSize=11, leading=16, fontName="Helvetica", spaceAfter=8)
-    closing_style = ParagraphStyle("closing", parent=normal, fontSize=11, leading=14, fontName="Helvetica", spaceAfter=2)
+    name_style = ParagraphStyle("name", parent=normal, fontSize=14, leading=18, fontName="Times-Bold", spaceAfter=2)
+    header_style = ParagraphStyle("header", parent=normal, fontSize=12, leading=15, fontName="Times-Roman", spaceAfter=1)
+    link_style = ParagraphStyle("link", parent=normal, fontSize=12, leading=15, fontName="Times-Roman", textColor=(0.1, 0.4, 0.8), spaceAfter=1)
+    date_style = ParagraphStyle("date", parent=normal, fontSize=12, leading=15, fontName="Times-Roman", spaceAfter=6)
+    body_style = ParagraphStyle("body", parent=normal, fontSize=12, leading=17, fontName="Times-Roman", spaceAfter=8)
+    closing_style = ParagraphStyle("closing", parent=normal, fontSize=12, leading=15, fontName="Times-Roman", spaceAfter=2)
 
     story = [
         Paragraph(HEADER["location"], header_style),
