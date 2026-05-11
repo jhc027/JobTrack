@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getProfile, updateProfile, type CandidateProfile } from "@/lib/api";
+import { getProfile, updateProfile, reevaluateAllPlanned, type CandidateProfile } from "@/lib/api";
 
 type FormState = Omit<CandidateProfile, "id" | "updated_at">;
 
@@ -62,6 +62,8 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reevaluating, setReevaluating] = useState(false);
+  const [reevalResult, setReevalResult] = useState<string | null>(null);
 
   useEffect(() => {
     getProfile()
@@ -76,6 +78,19 @@ export default function ProfilePage() {
   function handleChange(key: keyof FormState, value: string) {
     setForm((prev) => prev ? { ...prev, [key]: value } : prev);
     setSaved(false);
+  }
+
+  async function handleReevaluatePlanned() {
+    setReevaluating(true);
+    setReevalResult(null);
+    try {
+      const result = await reevaluateAllPlanned();
+      setReevalResult(result.message);
+    } catch {
+      setReevalResult("Re-evaluation failed. Try again.");
+    } finally {
+      setReevaluating(false);
+    }
   }
 
   async function handleSave() {
@@ -156,6 +171,27 @@ export default function ProfilePage() {
           {saving ? "Saving…" : saved ? "Saved ✓" : "Save Changes"}
         </button>
         {saved && <span className="text-green-400 text-sm">Profile updated.</span>}
+      </div>
+
+      <div className="mt-8 border-t border-slate-800 pt-6">
+        <h2 className="text-sm font-semibold text-slate-300 mb-1">Re-evaluate Planned Applications</h2>
+        <p className="text-xs text-slate-500 mb-3">
+          Re-runs fit scoring on all applications with status <span className="text-slate-400">Planned</span> using your current profile. Useful after updating your skills or experience.
+        </p>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleReevaluatePlanned}
+            disabled={reevaluating}
+            className="bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-slate-200 text-sm font-medium px-5 py-2.5 rounded-lg transition-colors"
+          >
+            {reevaluating ? "Re-evaluating…" : "Re-evaluate All Planned"}
+          </button>
+          {reevalResult && (
+            <span className={`text-sm ${reevalResult.includes("failed") ? "text-red-400" : "text-green-400"}`}>
+              {reevalResult}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

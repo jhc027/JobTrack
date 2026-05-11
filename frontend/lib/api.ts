@@ -116,6 +116,15 @@ export const updateProfile = (data: Partial<Omit<CandidateProfile, "id" | "updat
 export const reevaluateFit = (appId: number) =>
   api.post<Application>(`/applications/${appId}/reevaluate`).then((r) => r.data);
 
+export interface BulkReevaluateResult {
+  updated: number;
+  errors: number;
+  message: string;
+}
+
+export const reevaluateAllPlanned = () =>
+  api.post<BulkReevaluateResult>("/applications/reevaluate-planned").then((r) => r.data);
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 export const coverLetterExportUrl = (id: number, format: "docx" | "pdf") =>
   `${BASE_URL}/cover-letters/${id}/export/${format}`;

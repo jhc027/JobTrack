@@ -22,6 +22,7 @@ A personal, AI-powered job application tracker. Paste a job URL or description, 
 - **Export** — download cover letters as `.docx` or `.pdf`
 - **Dashboard** — search, filter by status, and sort by date, company, or fit score
 - **Candidate profile editor** — update your resume details at `/profile`; all future LLM calls use the latest version
+- **Bulk re-evaluate** — re-score all Planned applications at once from the Profile page after updating your resume
 - **LLM cost tracking** — token usage and estimated cost logged per run
 
 ## Running Locally
@@ -36,7 +37,7 @@ A personal, AI-powered job application tracker. Paste a job URL or description, 
 
 ```bash
 cd backend
-source # your venv path
+source /path/to/.venv/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -46,6 +47,7 @@ Create `backend/.env`:
 DATABASE_URL=sqlite:///./jobtrack.db
 OPENAI_API_KEY=sk-...
 APP_PASSWORD=your-password-here
+ALLOWED_ORIGINS=http://localhost:3000
 ```
 
 Start the server:
@@ -60,7 +62,7 @@ API runs at `http://localhost:8000`. Docs available at `http://localhost:8000/do
 
 ```bash
 cd frontend
-cp .env.local.example .env.local   # already contains NEXT_PUBLIC_API_URL=http://localhost:8000
+echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
 npm install
 npm run dev
 ```
@@ -116,9 +118,15 @@ DATABASE_URL=postgresql://user:password@localhost:5432/jobtrack
 
 No code changes needed. SQLAlchemy handles both databases identically.
 
+## Deployment
+
+- **Frontend** — Vercel (auto-deploys from GitHub on push to `master`)
+- **Backend + Database** — Railway (FastAPI service + PostgreSQL)
+- Set `ALLOWED_ORIGINS` on Railway to include your Vercel domain
+- Set `NEXT_PUBLIC_API_URL` on Vercel to your Railway backend URL
+
 ## Planned
 
-- Deployment config (Vercel + Railway)
 - Multi-user support with per-user data isolation
 - Chrome extension for grabbing job text from the browser
 - Company career page auto-fetch

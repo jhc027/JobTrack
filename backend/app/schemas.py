@@ -76,6 +76,12 @@ class ApplicationWithJobOut(ApplicationOut):
     job: JobOut
 
 
+class BulkReevaluateResult(BaseModel):
+    updated: int
+    errors: int
+    message: str
+
+
 # --- Cover Letter ---
 
 class CoverLetterOut(BaseModel):

@@ -85,6 +85,58 @@ def reevaluate_fit(app_id: int, db: Session = Depends(get_db)):
     return application
 
 
+@router.post("/reevaluate-planned", response_model=schemas.BulkReevaluateResult)
+def reevaluate_planned(db: Session = Depends(get_db)):
+    profile = db.query(models.CandidateProfile).first()
+    if not profile:
+        raise HTTPException(status_code=400, detail="No candidate profile found.")
+
+    planned = db.query(models.Application).filter(models.Application.status == "Planned").all()
+    if not planned:
+        return schemas.BulkReevaluateResult(updated=0, errors=0, message="No Planned applications found.")
+
+    profile_text = build_profile_text(profile)
+    updated = 0
+    errors = 0
+
+    for application in planned:
+        try:
+            job = db.get(models.Job, application.job_id)
+            job_data = {
+                "company": job.company,
+                "role_title": job.role_title,
+                "required_skills": job.required_skills,
+                "preferred_skills": job.preferred_skills,
+                "responsibilities": job.responsibilities,
+            }
+            fit = openai_service.analyze_fit(job_data, profile_text)
+            usage = fit.pop("_usage")
+
+            application.fit_score = fit.get("fit_score")
+            application.fit_level = fit.get("fit_level")
+            application.match_summary = fit.get("match_summary")
+            application.recommended_emphasis = fit.get("recommended_emphasis")
+
+            db.add(models.LlmRun(
+                application_id=application.id,
+                model=usage["model"],
+                task_type="fit_analysis",
+                input_tokens=usage["input_tokens"],
+                output_tokens=usage["output_tokens"],
+                estimated_cost=usage["estimated_cost"],
+            ))
+            updated += 1
+        except Exception:
+            errors += 1
+
+    db.commit()
+    return schemas.BulkReevaluateResult(
+        updated=updated,
+        errors=errors,
+        message=f"Re-evaluated {updated} application{'s' if updated != 1 else ''}." + (f" {errors} failed." if errors else ""),
+    )
+
+
 @router.get("/{app_id}/cover-letters", response_model=list[schemas.CoverLetterOut])
 def list_cover_letters(app_id: int, db: Session = Depends(get_db)):
     app = db.get(models.Application, app_id)
