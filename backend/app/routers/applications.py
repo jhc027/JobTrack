@@ -85,15 +85,20 @@ def reevaluate_fit(app_id: int, db: Session = Depends(get_db)):
     return application
 
 
-@router.post("/reevaluate-planned", response_model=schemas.BulkReevaluateResult)
-def reevaluate_planned(db: Session = Depends(get_db)):
+@router.post("/reevaluate-bulk", response_model=schemas.BulkReevaluateResult)
+def reevaluate_bulk(payload: schemas.BulkReevaluateRequest, db: Session = Depends(get_db)):
     profile = db.query(models.CandidateProfile).first()
     if not profile:
         raise HTTPException(status_code=400, detail="No candidate profile found.")
 
-    planned = db.query(models.Application).filter(models.Application.status == "Planned").all()
+    query = db.query(models.Application)
+    if payload.statuses:
+        query = query.filter(models.Application.status.in_(payload.statuses))
+    planned = query.all()
+
     if not planned:
-        return schemas.BulkReevaluateResult(updated=0, errors=0, message="No Planned applications found.")
+        label = ", ".join(payload.statuses) if payload.statuses else "any"
+        return schemas.BulkReevaluateResult(updated=0, errors=0, message=f"No applications with status {label} found.")
 
     profile_text = build_profile_text(profile)
     updated = 0

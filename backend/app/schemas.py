@@ -76,6 +76,10 @@ class ApplicationWithJobOut(ApplicationOut):
     job: JobOut
 
 
+class BulkReevaluateRequest(BaseModel):
+    statuses: list[str] | None = None  # None = all statuses
+
+
 class BulkReevaluateResult(BaseModel):
     updated: int
     errors: int

@@ -122,8 +122,8 @@ export interface BulkReevaluateResult {
   message: string;
 }
 
-export const reevaluateAllPlanned = () =>
-  api.post<BulkReevaluateResult>("/applications/reevaluate-planned").then((r) => r.data);
+export const reevaluateBulk = (statuses: string[] | null) =>
+  api.post<BulkReevaluateResult>("/applications/reevaluate-bulk", { statuses }).then((r) => r.data);
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 export const coverLetterExportUrl = (id: number, format: "docx" | "pdf") =>

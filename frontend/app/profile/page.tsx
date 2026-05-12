@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getProfile, updateProfile, reevaluateAllPlanned, type CandidateProfile } from "@/lib/api";
+import { getProfile, updateProfile, reevaluateBulk, type CandidateProfile } from "@/lib/api";
 
 type FormState = Omit<CandidateProfile, "id" | "updated_at">;
 
@@ -64,6 +64,7 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [reevaluating, setReevaluating] = useState(false);
   const [reevalResult, setReevalResult] = useState<string | null>(null);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(["Planned"]);
 
   useEffect(() => {
     getProfile()
@@ -80,11 +81,18 @@ export default function ProfilePage() {
     setSaved(false);
   }
 
-  async function handleReevaluatePlanned() {
+  function toggleStatus(status: string) {
+    setSelectedStatuses((prev) =>
+      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
+    );
+  }
+
+  async function handleReevaluateBulk() {
+    if (selectedStatuses.length === 0) return;
     setReevaluating(true);
     setReevalResult(null);
     try {
-      const result = await reevaluateAllPlanned();
+      const result = await reevaluateBulk(selectedStatuses);
       setReevalResult(result.message);
     } catch {
       setReevalResult("Re-evaluation failed. Try again.");
@@ -174,17 +182,32 @@ export default function ProfilePage() {
       </div>
 
       <div className="mt-8 border-t border-slate-800 pt-6">
-        <h2 className="text-sm font-semibold text-slate-300 mb-1">Re-evaluate Planned Applications</h2>
+        <h2 className="text-sm font-semibold text-slate-300 mb-1">Bulk Re-evaluate Fit Scores</h2>
         <p className="text-xs text-slate-500 mb-3">
-          Re-runs fit scoring on all applications with status <span className="text-slate-400">Planned</span> using your current profile. Useful after updating your skills or experience.
+          Re-runs fit scoring on applications using your current profile. Select which statuses to include.
         </p>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {["Planned", "Applied", "Interviewing", "Offered", "Rejected", "Withdrawn"].map((status) => (
+            <button
+              key={status}
+              onClick={() => toggleStatus(status)}
+              className={`text-xs px-3 py-1.5 rounded-full transition-colors font-medium ${
+                selectedStatuses.includes(status)
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-800 text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              {status}
+            </button>
+          ))}
+        </div>
         <div className="flex items-center gap-4">
           <button
-            onClick={handleReevaluatePlanned}
-            disabled={reevaluating}
+            onClick={handleReevaluateBulk}
+            disabled={reevaluating || selectedStatuses.length === 0}
             className="bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-slate-200 text-sm font-medium px-5 py-2.5 rounded-lg transition-colors"
           >
-            {reevaluating ? "Re-evaluating…" : "Re-evaluate All Planned"}
+            {reevaluating ? "Re-evaluating…" : `Re-evaluate (${selectedStatuses.length} selected)`}
           </button>
           {reevalResult && (
             <span className={`text-sm ${reevalResult.includes("failed") ? "text-red-400" : "text-green-400"}`}>
