@@ -9,6 +9,21 @@ from app.services.profile_service import build_profile_text
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 
+@router.get("/check-duplicate", response_model=schemas.DuplicateCheckResult)
+def check_duplicate(url: str, db: Session = Depends(get_db)):
+    existing = db.query(models.Job).filter(models.Job.job_url == url).first()
+    if not existing:
+        return schemas.DuplicateCheckResult(is_duplicate=False)
+    app = db.query(models.Application).filter(models.Application.job_id == existing.id).first()
+    return schemas.DuplicateCheckResult(
+        is_duplicate=True,
+        existing_job_id=existing.id,
+        existing_application_id=app.id if app else None,
+        company=existing.company,
+        role_title=existing.role_title,
+    )
+
+
 @router.post("/ingest", response_model=schemas.IngestResponse)
 def ingest_job(payload: schemas.JobCreate, db: Session = Depends(get_db)):
     if not payload.job_url and not payload.manual_job_text:

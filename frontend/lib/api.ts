@@ -72,6 +72,17 @@ export interface IngestResponse {
   message: string;
 }
 
+export interface DuplicateCheckResult {
+  is_duplicate: boolean;
+  existing_job_id: number | null;
+  existing_application_id: number | null;
+  company: string | null;
+  role_title: string | null;
+}
+
+export const checkDuplicate = (url: string) =>
+  api.get<DuplicateCheckResult>("/jobs/check-duplicate", { params: { url } }).then((r) => r.data);
+
 export const ingestJob = (data: { job_url?: string; manual_job_text?: string }) =>
   api.post<IngestResponse>("/jobs/ingest", data).then((r) => r.data);
 

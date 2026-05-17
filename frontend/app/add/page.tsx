@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ingestJob } from "@/lib/api";
+import Link from "next/link";
+import { ingestJob, checkDuplicate, type DuplicateCheckResult } from "@/lib/api";
 
 export default function AddJob() {
   const router = useRouter();
@@ -10,6 +11,26 @@ export default function AddJob() {
   const [jobText, setJobText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [duplicate, setDuplicate] = useState<DuplicateCheckResult | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const url = jobUrl.trim();
+    setDuplicate(null);
+    if (!url) return;
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const result = await checkDuplicate(url);
+        if (result.is_duplicate) setDuplicate(result);
+      } catch {
+        // silently ignore — duplicate check is best-effort
+      }
+    }, 600);
+
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [jobUrl]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -55,6 +76,24 @@ export default function AddJob() {
             placeholder="https://jobs.company.com/..."
             className="w-full bg-[#1a1d27] border border-slate-700 rounded-lg px-3 py-2.5 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm"
           />
+          {duplicate && (
+            <div className="mt-2 bg-yellow-950/40 border border-yellow-800 rounded-lg px-3 py-2.5 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-yellow-400 text-sm font-medium">Duplicate detected</p>
+                <p className="text-yellow-500 text-xs mt-0.5">
+                  {duplicate.company ?? "This job"}{duplicate.role_title ? ` — ${duplicate.role_title}` : ""} is already in your tracker.
+                </p>
+              </div>
+              {duplicate.existing_application_id && (
+                <Link
+                  href={`/applications/${duplicate.existing_application_id}`}
+                  className="text-xs text-yellow-400 hover:text-yellow-300 underline shrink-0"
+                >
+                  View →
+                </Link>
+              )}
+            </div>
+          )}
         </div>
 
         <div>

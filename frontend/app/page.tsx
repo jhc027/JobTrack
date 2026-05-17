@@ -200,6 +200,10 @@ export default function Dashboard() {
                   {app.job?.location ? ` · ${app.job.location}` : ""}
                   {app.job?.remote_type && app.job.remote_type !== "Unknown" ? ` · ${app.job.remote_type}` : ""}
                 </p>
+                <p className="text-slate-600 text-xs mt-0.5">
+                  Added {new Date(app.date_added).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                  {app.date_applied ? ` · Applied ${new Date(app.date_applied).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}
+                </p>
                 {app.match_summary && (
                   <p className="text-slate-500 text-xs mt-1.5 line-clamp-2">{app.match_summary}</p>
                 )}

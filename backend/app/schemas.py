@@ -76,6 +76,14 @@ class ApplicationWithJobOut(ApplicationOut):
     job: JobOut
 
 
+class DuplicateCheckResult(BaseModel):
+    is_duplicate: bool
+    existing_job_id: int | None = None
+    existing_application_id: int | None = None
+    company: str | None = None
+    role_title: str | None = None
+
+
 class BulkReevaluateRequest(BaseModel):
     statuses: list[str] | None = None  # None = all statuses
 
