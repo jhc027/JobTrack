@@ -28,11 +28,34 @@ const EVENT_ICONS: Record<string, string> = {
   manual: "✎",
 };
 
-function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
+const SECTION_STYLES: Record<string, string> = {
+  blue:   "border-l-4 border-l-blue-600 border border-slate-800",
+  green:  "border-l-4 border-l-green-600 border border-slate-800",
+  amber:  "border-l-4 border-l-amber-500 border border-slate-800",
+  purple: "border-l-4 border-l-purple-500 border border-slate-800",
+  slate:  "border-l-4 border-l-slate-600 border border-slate-800",
+  none:   "border border-slate-800",
+};
+
+const HEADER_STYLES: Record<string, string> = {
+  blue:   "text-blue-400",
+  green:  "text-green-400",
+  amber:  "text-amber-400",
+  purple: "text-purple-400",
+  slate:  "text-slate-400",
+  none:   "text-slate-400",
+};
+
+function Section({ title, children, action, color = "none" }: {
+  title: string;
+  children: React.ReactNode;
+  action?: React.ReactNode;
+  color?: keyof typeof SECTION_STYLES;
+}) {
   return (
-    <div className="bg-[#1a1d27] border border-slate-800 rounded-xl p-5">
+    <div className={`bg-[#1a1d27] rounded-xl p-5 ${SECTION_STYLES[color]}`}>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">{title}</h2>
+        <h2 className={`text-sm font-semibold uppercase tracking-wider ${HEADER_STYLES[color]}`}>{title}</h2>
         {action}
       </div>
       {children}
@@ -359,7 +382,7 @@ export default function ApplicationDetail() {
 
       {/* Fit + Job Details */}
       <div className="grid sm:grid-cols-2 gap-4">
-        <Section title="Fit Analysis">
+        <Section title="Fit Analysis" color="blue">
           {app.fit_score != null && (
             <div className="flex items-center gap-2 mb-3">
               <span className="text-3xl font-bold text-white">{app.fit_score.toFixed(1)}</span>
@@ -378,7 +401,7 @@ export default function ApplicationDetail() {
           </button>
         </Section>
 
-        <Section title="Job Details" action={
+        <Section title="Job Details" color="blue" action={
           !editMode ? <button onClick={startEdit} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Edit fields</button> : null
         }>
           {editMode ? (
@@ -424,94 +447,40 @@ export default function ApplicationDetail() {
 
       {/* Responsibilities */}
       {!editMode && job?.responsibilities && (
-        <Section title="Responsibilities">
+        <Section title="Responsibilities" color="blue">
           <p className="text-sm text-slate-300 whitespace-pre-line">{job.responsibilities}</p>
         </Section>
       )}
 
-      {/* Notes */}
-      <Section title="Notes">
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} placeholder="Add notes about this application..."
-          className="w-full bg-[#0f1117] border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 resize-y" />
-        <button onClick={handleSaveNotes} disabled={savingNotes}
-          className="mt-2 text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg transition-colors">
-          {savingNotes ? "Saving..." : "Save Notes"}
+      {/* Cover Letters — first action */}
+      <Section title="Cover Letters" color="green">
+        <button onClick={handleGenerateLetter} disabled={generatingLetter}
+          className="mb-4 bg-green-700 hover:bg-green-600 disabled:bg-slate-700 disabled:text-slate-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          {generatingLetter ? "Generating…" : "Generate Cover Letter"}
         </button>
-      </Section>
-
-      {/* Tags */}
-      <Section title="Tags">
-        <p className="text-xs text-slate-500 mb-2">Comma-separated labels for your own organization (e.g. dream company, referral, stretch role)</p>
-        <input
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
-          placeholder="dream company, referral, remote only…"
-          className="w-full bg-[#0f1117] border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500"
-        />
-        {tags && (
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {tags.split(",").map((t) => t.trim()).filter(Boolean).map((t) => (
-              <span key={t} className="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full border border-slate-700">{t}</span>
-            ))}
-          </div>
-        )}
-        <button onClick={handleSaveTags} disabled={savingTags}
-          className="mt-2 text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg transition-colors">
-          {savingTags ? "Saving..." : "Save Tags"}
-        </button>
-      </Section>
-
-      {/* Company Research */}
-      <Section title="Company Research">
-        <button onClick={handleGenerateResearch} disabled={generatingResearch}
-          className="mb-4 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-slate-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-          {generatingResearch ? "Researching…" : "Research Company"}
-        </button>
-        {companyResearch.length === 0 && !generatingResearch && <p className="text-slate-500 text-sm">No research generated yet.</p>}
+        {coverLetters.length === 0 && !generatingLetter && <p className="text-slate-500 text-sm">No cover letters yet.</p>}
         <div className="flex flex-col gap-4">
-          {companyResearch.map((r, i) => (
-            <div key={r.id} className="border border-slate-700 rounded-lg p-4">
+          {coverLetters.map((letter, i) => (
+            <div key={letter.id} className="border border-slate-700 rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs text-slate-500">
-                  {new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                </span>
-                <button onClick={() => handleDeleteResearch(r.id)} className="text-xs text-slate-600 hover:text-red-400 transition-colors">Delete</button>
-              </div>
-              <div className="text-sm text-slate-300 whitespace-pre-line leading-relaxed">{r.summary_text}</div>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      {/* Follow-up Emails */}
-      <Section title="Follow-up Emails">
-        <button onClick={handleGenerateEmail} disabled={generatingEmail}
-          className="mb-4 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-slate-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-          {generatingEmail ? "Drafting…" : "Draft Follow-up Email"}
-        </button>
-        {followUpEmails.length === 0 && !generatingEmail && <p className="text-slate-500 text-sm">No follow-up emails drafted yet.</p>}
-        <div className="flex flex-col gap-4">
-          {followUpEmails.map((email) => (
-            <div key={email.id} className="border border-slate-700 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs text-slate-500">
-                  {new Date(email.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                </span>
-                <div className="flex gap-2">
-                  <button onClick={() => handleCopyEmail(email)} className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded-md transition-colors">
-                    {copiedEmailId === email.id ? "Copied!" : "Copy"}
+                <span className="text-xs text-slate-500">Version {coverLetters.length - i} · {new Date(letter.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+                <div className="flex gap-2 flex-wrap">
+                  <button onClick={() => handleCopy(letter)} className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded-md transition-colors">
+                    {copiedId === letter.id ? "Copied!" : "Copy"}
                   </button>
-                  <button onClick={() => handleDeleteEmail(email.id)} className="text-xs text-slate-600 hover:text-red-400 transition-colors">Delete</button>
+                  <button onClick={() => handleExport(letter.id, "docx")} className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded-md transition-colors">.docx</button>
+                  <button onClick={() => handleExport(letter.id, "pdf")} className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded-md transition-colors">.pdf</button>
+                  <button onClick={() => handleDeleteLetter(letter.id)} className="text-xs text-slate-600 hover:text-red-400 transition-colors">Delete</button>
                 </div>
               </div>
-              <pre className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed font-sans">{email.email_text}</pre>
+              <p className="text-sm text-slate-300 whitespace-pre-line leading-relaxed">{letter.body_text}</p>
             </div>
           ))}
         </div>
       </Section>
 
-      {/* Activity Log */}
-      <Section title="Activity Log">
+      {/* Activity Log — frequent reference */}
+      <Section title="Activity Log" color="green">
         <div className="flex flex-col gap-2 mb-4">
           {activityLog.length === 0 && <p className="text-slate-500 text-sm">No activity yet.</p>}
           {activityLog.map((entry) => (
@@ -541,10 +510,59 @@ export default function ApplicationDetail() {
         </div>
       </Section>
 
+      {/* Notes */}
+      <Section title="Notes" color="slate">
+        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} placeholder="Add notes about this application..."
+          className="w-full bg-[#0f1117] border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 resize-y" />
+        <button onClick={handleSaveNotes} disabled={savingNotes}
+          className="mt-2 text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg transition-colors">
+          {savingNotes ? "Saving..." : "Save Notes"}
+        </button>
+      </Section>
+
+      {/* Tags */}
+      <Section title="Tags" color="slate">
+        <p className="text-xs text-slate-500 mb-2">Comma-separated labels for your own organization (e.g. dream company, referral, stretch role)</p>
+        <input value={tags} onChange={(e) => setTags(e.target.value)}
+          placeholder="dream company, referral, remote only…"
+          className="w-full bg-[#0f1117] border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500" />
+        {tags && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {tags.split(",").map((t) => t.trim()).filter(Boolean).map((t) => (
+              <span key={t} className="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full border border-slate-700">{t}</span>
+            ))}
+          </div>
+        )}
+        <button onClick={handleSaveTags} disabled={savingTags}
+          className="mt-2 text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg transition-colors">
+          {savingTags ? "Saving..." : "Save Tags"}
+        </button>
+      </Section>
+
+      {/* Company Research */}
+      <Section title="Company Research" color="amber">
+        <button onClick={handleGenerateResearch} disabled={generatingResearch}
+          className="mb-4 bg-amber-700 hover:bg-amber-600 disabled:bg-slate-800 disabled:text-slate-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          {generatingResearch ? "Researching…" : "Research Company"}
+        </button>
+        {companyResearch.length === 0 && !generatingResearch && <p className="text-slate-500 text-sm">No research generated yet.</p>}
+        <div className="flex flex-col gap-4">
+          {companyResearch.map((r) => (
+            <div key={r.id} className="border border-slate-700 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs text-slate-500">{new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+                <button onClick={() => handleDeleteResearch(r.id)} className="text-xs text-slate-600 hover:text-red-400 transition-colors">Delete</button>
+              </div>
+              <div className="text-sm text-slate-300 whitespace-pre-line leading-relaxed">{r.summary_text}</div>
+            </div>
+          ))}
+        </div>
+      </Section>
+
       {/* Interview Prep */}
-      <Section title="Interview Prep">
+      <Section title="Interview Prep" color="amber">
         <button onClick={handleGeneratePrep} disabled={generatingPrep}
-          className="mb-4 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-slate-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          className="mb-4 bg-amber-700 hover:bg-amber-600 disabled:bg-slate-800 disabled:text-slate-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
           {generatingPrep ? "Generating…" : "Generate Interview Questions"}
         </button>
         {interviewPreps.length === 0 && !generatingPrep && <p className="text-slate-500 text-sm">No interview prep generated yet.</p>}
@@ -552,9 +570,7 @@ export default function ApplicationDetail() {
           {interviewPreps.map((prep, i) => (
             <div key={prep.id} className="border border-slate-700 rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs text-slate-500">
-                  Set {interviewPreps.length - i} · {new Date(prep.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                </span>
+                <span className="text-xs text-slate-500">Set {interviewPreps.length - i} · {new Date(prep.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
                 <button onClick={() => handleDeletePrep(prep.id)} className="text-xs text-slate-600 hover:text-red-400 transition-colors">Delete</button>
               </div>
               <div className="text-sm text-slate-300 whitespace-pre-line leading-relaxed">{prep.questions_text}</div>
@@ -563,28 +579,26 @@ export default function ApplicationDetail() {
         </div>
       </Section>
 
-      {/* Cover Letters */}
-      <Section title="Cover Letters">
-        <button onClick={handleGenerateLetter} disabled={generatingLetter}
-          className="mb-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-          {generatingLetter ? "Generating…" : "Generate Cover Letter"}
+      {/* Follow-up Emails */}
+      <Section title="Follow-up Emails" color="purple">
+        <button onClick={handleGenerateEmail} disabled={generatingEmail}
+          className="mb-4 bg-purple-700 hover:bg-purple-600 disabled:bg-slate-800 disabled:text-slate-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          {generatingEmail ? "Drafting…" : "Draft Follow-up Email"}
         </button>
-        {coverLetters.length === 0 && !generatingLetter && <p className="text-slate-500 text-sm">No cover letters yet.</p>}
+        {followUpEmails.length === 0 && !generatingEmail && <p className="text-slate-500 text-sm">No follow-up emails drafted yet.</p>}
         <div className="flex flex-col gap-4">
-          {coverLetters.map((letter, i) => (
-            <div key={letter.id} className="border border-slate-700 rounded-lg p-4">
+          {followUpEmails.map((email) => (
+            <div key={email.id} className="border border-slate-700 rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs text-slate-500">Version {coverLetters.length - i} · {new Date(letter.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
-                <div className="flex gap-2 flex-wrap">
-                  <button onClick={() => handleCopy(letter)} className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded-md transition-colors">
-                    {copiedId === letter.id ? "Copied!" : "Copy"}
+                <span className="text-xs text-slate-500">{new Date(email.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+                <div className="flex gap-2">
+                  <button onClick={() => handleCopyEmail(email)} className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded-md transition-colors">
+                    {copiedEmailId === email.id ? "Copied!" : "Copy"}
                   </button>
-                  <button onClick={() => handleExport(letter.id, "docx")} className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded-md transition-colors">.docx</button>
-                  <button onClick={() => handleExport(letter.id, "pdf")} className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded-md transition-colors">.pdf</button>
-                  <button onClick={() => handleDeleteLetter(letter.id)} className="text-xs text-slate-600 hover:text-red-400 transition-colors">Delete</button>
+                  <button onClick={() => handleDeleteEmail(email.id)} className="text-xs text-slate-600 hover:text-red-400 transition-colors">Delete</button>
                 </div>
               </div>
-              <p className="text-sm text-slate-300 whitespace-pre-line leading-relaxed">{letter.body_text}</p>
+              <pre className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed font-sans">{email.email_text}</pre>
             </div>
           ))}
         </div>
