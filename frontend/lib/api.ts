@@ -136,6 +136,50 @@ export interface BulkReevaluateResult {
 export const reevaluateBulk = (statuses: string[] | null) =>
   api.post<BulkReevaluateResult>("/applications/reevaluate-bulk", { statuses }).then((r) => r.data);
 
+export interface ActivityLog {
+  id: number;
+  application_id: number;
+  event_type: string;
+  description: string;
+  is_manual: boolean;
+  created_at: string;
+}
+
+export const listActivity = (appId: number) =>
+  api.get<ActivityLog[]>(`/applications/${appId}/activity`).then((r) => r.data);
+
+export const addManualActivity = (appId: number, description: string) =>
+  api.post<ActivityLog>(`/applications/${appId}/activity`, { description }).then((r) => r.data);
+
+export interface InterviewPrep {
+  id: number;
+  application_id: number;
+  questions_text: string;
+  created_at: string;
+}
+
+export const generateInterviewPrep = (appId: number) =>
+  api.post<InterviewPrep>(`/interview-prep/${appId}`).then((r) => r.data);
+
+export const listInterviewPreps = (appId: number) =>
+  api.get<InterviewPrep[]>(`/interview-prep/${appId}`).then((r) => r.data);
+
+export const deleteInterviewPrep = (prepId: number) =>
+  api.delete(`/interview-prep/${prepId}/delete`);
+
+export const updateJob = (jobId: number, data: Partial<Job>) =>
+  api.patch<Job>(`/jobs/${jobId}`, data).then((r) => r.data);
+
+export interface Stats {
+  total: number;
+  by_status: Record<string, number>;
+  average_fit_score: number | null;
+  by_fit_level: Record<string, number>;
+  weekly_activity: { week: string; count: number }[];
+}
+
+export const getStats = () => api.get<Stats>("/stats/").then((r) => r.data);
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 export const coverLetterExportUrl = (id: number, format: "docx" | "pdf") =>
   `${BASE_URL}/cover-letters/${id}/export/${format}`;

@@ -8,6 +8,7 @@ from app.database import Base, SessionLocal, engine
 from app.middleware.auth import AuthMiddleware
 from app.models import CandidateProfile
 from app.routers import applications, cover_letters, jobs, profile
+from app.routers import activity, interview_prep, stats
 from app.routers.profile import DEFAULT_PROFILE
 
 
@@ -43,6 +44,9 @@ app.include_router(jobs.router)
 app.include_router(applications.router)
 app.include_router(cover_letters.router)
 app.include_router(profile.router)
+app.include_router(activity.router)
+app.include_router(interview_prep.router)
+app.include_router(stats.router)
 
 
 @app.get("/health")

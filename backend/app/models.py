@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -63,6 +63,8 @@ class Application(Base):
     job: Mapped["Job"] = relationship(back_populates="applications")
     cover_letters: Mapped[list["CoverLetter"]] = relationship(back_populates="application", cascade="all, delete-orphan")
     llm_runs: Mapped[list["LlmRun"]] = relationship(back_populates="application", cascade="all, delete-orphan")
+    activity_logs: Mapped[list["ActivityLog"]] = relationship(back_populates="application", cascade="all, delete-orphan")
+    interview_preps: Mapped[list["InterviewPrep"]] = relationship(back_populates="application", cascade="all, delete-orphan")
 
 
 class CoverLetter(Base):
@@ -92,3 +94,27 @@ class LlmRun(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     application: Mapped["Application"] = relationship(back_populates="llm_runs")
+
+
+class ActivityLog(Base):
+    __tablename__ = "activity_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    application_id: Mapped[int] = mapped_column(ForeignKey("applications.id"))
+    event_type: Mapped[str] = mapped_column(String(100))  # job_added, status_change, fit_evaluated, cover_letter_generated, manual
+    description: Mapped[str] = mapped_column(Text)
+    is_manual: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    application: Mapped["Application"] = relationship(back_populates="activity_logs")
+
+
+class InterviewPrep(Base):
+    __tablename__ = "interview_prep"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    application_id: Mapped[int] = mapped_column(ForeignKey("applications.id"))
+    questions_text: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    application: Mapped["Application"] = relationship(back_populates="interview_preps")

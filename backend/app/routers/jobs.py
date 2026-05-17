@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session, joinedload
 from app import models, schemas
 from app.database import get_db
 from app.services import openai_service
+from app.services.activity_service import log_event
 from app.services.profile_service import build_profile_text
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
@@ -80,6 +81,14 @@ def ingest_job(payload: schemas.JobCreate, db: Session = Depends(get_db)):
             output_tokens=u["output_tokens"],
             estimated_cost=u["estimated_cost"],
         ))
+
+    company = parsed.get("company") or "Unknown company"
+    role = parsed.get("role_title") or "Unknown role"
+    fit_level = fit.get("fit_level") or "?"
+    fit_score = fit.get("fit_score")
+    score_str = f"{fit_score:.1f}" if fit_score is not None else "?"
+    log_event(db, application.id, "job_added",
+              f"Job added: {role} at {company} — Fit {score_str}/10 ({fit_level})")
 
     db.commit()
     db.refresh(job)

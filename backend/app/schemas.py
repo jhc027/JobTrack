@@ -76,6 +76,30 @@ class ApplicationWithJobOut(ApplicationOut):
     job: JobOut
 
 
+class ActivityLogOut(BaseModel):
+    id: int
+    application_id: int
+    event_type: str
+    description: str
+    is_manual: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ActivityLogCreate(BaseModel):
+    description: str
+
+
+class InterviewPrepOut(BaseModel):
+    id: int
+    application_id: int
+    questions_text: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class DuplicateCheckResult(BaseModel):
     is_duplicate: bool
     existing_job_id: int | None = None

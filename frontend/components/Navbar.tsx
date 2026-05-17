@@ -21,6 +21,7 @@ export default function Navbar() {
         <div className="flex items-center gap-6 text-sm text-slate-400">
           <Link href="/" className="hover:text-white transition-colors">Dashboard</Link>
           <Link href="/add" className="hover:text-white transition-colors">Add Job</Link>
+          <Link href="/stats" className="hover:text-white transition-colors">Stats</Link>
           <Link href="/profile" className="hover:text-white transition-colors">Profile</Link>
           <button onClick={handleSignOut} className="hover:text-white transition-colors">
             Sign Out

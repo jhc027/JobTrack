@@ -171,3 +171,46 @@ Writing style:
             "estimated_cost": _cost(MODEL, usage.prompt_tokens, usage.completion_tokens),
         },
     }
+
+
+def generate_interview_prep(job_data: dict, profile: str) -> dict:
+    prompt = f"""You are a career coach preparing a candidate for a job interview.
+
+Candidate profile:
+{profile}
+
+Job details:
+Company: {job_data.get('company', '')}
+Role: {job_data.get('role_title', '')}
+Required skills: {job_data.get('required_skills', '')}
+Preferred skills: {job_data.get('preferred_skills', '')}
+Responsibilities: {job_data.get('responsibilities', '')}
+
+Generate 10 likely interview questions for this specific role, along with a brief (1-2 sentence) tip on how the candidate should approach each one based on their profile.
+
+Format your response exactly like this for each question:
+**Q1: [Question]**
+Tip: [How to approach it based on the candidate's background]
+
+Cover a mix of: behavioral questions, technical/role-specific questions, and situational questions.
+Do not include generic filler questions. Make them specific to this role and company.
+Return only the questions and tips — no intro or outro text."""
+
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.5,
+        max_tokens=1500,
+    )
+
+    usage = response.usage
+    text = response.choices[0].message.content.strip()
+    return {
+        "questions_text": text,
+        "_usage": {
+            "model": MODEL,
+            "input_tokens": usage.prompt_tokens,
+            "output_tokens": usage.completion_tokens,
+            "estimated_cost": _cost(MODEL, usage.prompt_tokens, usage.completion_tokens),
+        },
+    }

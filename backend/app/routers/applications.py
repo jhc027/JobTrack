@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session, joinedload
 from app import models, schemas
 from app.database import get_db
 from app.services import openai_service
+from app.services.activity_service import log_event
 from app.services.profile_service import build_profile_text
 
 router = APIRouter(prefix="/applications", tags=["applications"])
@@ -37,7 +38,11 @@ def update_application(app_id: int, payload: schemas.ApplicationUpdate, db: Sess
     app = db.get(models.Application, app_id)
     if not app:
         raise HTTPException(status_code=404, detail="Application not found.")
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    data = payload.model_dump(exclude_unset=True)
+    if "status" in data and data["status"] != app.status:
+        log_event(db, app_id, "status_change",
+                  f"Status changed: {app.status} → {data['status']}")
+    for field, value in data.items():
         setattr(app, field, value)
     db.commit()
     db.refresh(app)
@@ -79,6 +84,10 @@ def reevaluate_fit(app_id: int, db: Session = Depends(get_db)):
         output_tokens=usage["output_tokens"],
         estimated_cost=usage["estimated_cost"],
     ))
+
+    score_str = f"{fit.get('fit_score'):.1f}" if fit.get("fit_score") is not None else "?"
+    log_event(db, app_id, "fit_evaluated",
+              f"Fit re-evaluated: {score_str}/10 ({fit.get('fit_level', '?')})")
 
     db.commit()
     db.refresh(application)

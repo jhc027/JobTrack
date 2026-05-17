@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app import models, schemas
 from app.database import get_db
 from app.services import export_service, openai_service
+from app.services.activity_service import log_event
 from app.services.profile_service import build_profile_text
 
 router = APIRouter(prefix="/cover-letters", tags=["cover-letters"])
@@ -50,6 +51,9 @@ def generate_cover_letter(app_id: int, db: Session = Depends(get_db)):
         output_tokens=usage["output_tokens"],
         estimated_cost=usage["estimated_cost"],
     ))
+
+    log_event(db, app_id, "cover_letter_generated",
+              f"Cover letter generated for {job.role_title or 'role'} at {job.company or 'company'}")
 
     db.commit()
     db.refresh(cover_letter)
