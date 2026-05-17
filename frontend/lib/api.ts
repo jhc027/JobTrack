@@ -53,6 +53,7 @@ export interface Application {
   follow_up_date: string | null;
   result: string | null;
   notes: string | null;
+  tags: string | null;
   job?: Job;
 }
 
@@ -179,6 +180,48 @@ export interface Stats {
 }
 
 export const getStats = () => api.get<Stats>("/stats/").then((r) => r.data);
+
+export interface SkillGap {
+  skill: string;
+  count: number;
+}
+export const getSkillGaps = () =>
+  api.get<{ gaps: SkillGap[]; total_jobs_analyzed: number }>("/stats/skill-gaps").then((r) => r.data);
+
+export interface FollowUpEmail {
+  id: number;
+  application_id: number;
+  email_text: string;
+  created_at: string;
+}
+export const generateFollowUpEmail = (appId: number) =>
+  api.post<FollowUpEmail>(`/follow-up-emails/${appId}`).then((r) => r.data);
+export const listFollowUpEmails = (appId: number) =>
+  api.get<FollowUpEmail[]>(`/follow-up-emails/${appId}`).then((r) => r.data);
+export const deleteFollowUpEmail = (emailId: number) =>
+  api.delete(`/follow-up-emails/${emailId}/delete`);
+
+export interface CompanyResearch {
+  id: number;
+  application_id: number;
+  summary_text: string;
+  created_at: string;
+}
+export const generateCompanyResearch = (appId: number) =>
+  api.post<CompanyResearch>(`/company-research/${appId}`).then((r) => r.data);
+export const listCompanyResearch = (appId: number) =>
+  api.get<CompanyResearch[]>(`/company-research/${appId}`).then((r) => r.data);
+export const deleteCompanyResearch = (researchId: number) =>
+  api.delete(`/company-research/${researchId}/delete`);
+
+export const importResumePdf = (file: File) => {
+  const form = new FormData();
+  form.append("file", file);
+  return api.post<{ extracted: Partial<CandidateProfile>; raw_text_length: number }>(
+    "/profile/import-pdf", form,
+    { headers: { "Content-Type": "multipart/form-data" } }
+  ).then((r) => r.data);
+};
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 export const coverLetterExportUrl = (id: number, format: "docx" | "pdf") =>

@@ -53,6 +53,7 @@ class ApplicationUpdate(BaseModel):
     follow_up_date: datetime | None = None
     result: str | None = None
     notes: str | None = None
+    tags: str | None = None
 
 
 class ApplicationOut(BaseModel):
@@ -68,6 +69,7 @@ class ApplicationOut(BaseModel):
     follow_up_date: datetime | None
     result: str | None
     notes: str | None
+    tags: str | None
 
     model_config = {"from_attributes": True}
 
@@ -95,6 +97,24 @@ class InterviewPrepOut(BaseModel):
     id: int
     application_id: int
     questions_text: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class FollowUpEmailOut(BaseModel):
+    id: int
+    application_id: int
+    email_text: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class CompanyResearchOut(BaseModel):
+    id: int
+    application_id: int
+    summary_text: str
     created_at: datetime
 
     model_config = {"from_attributes": True}

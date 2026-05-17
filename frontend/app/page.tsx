@@ -85,7 +85,8 @@ export default function Dashboard() {
         a.job?.location?.toLowerCase().includes(q) ||
         a.job?.required_skills?.toLowerCase().includes(q) ||
         a.job?.source_platform?.toLowerCase().includes(q) ||
-        a.notes?.toLowerCase().includes(q)
+        a.notes?.toLowerCase().includes(q) ||
+        a.tags?.toLowerCase().includes(q)
       );
     });
     return sortApplications(filtered, sortKey);

@@ -8,7 +8,10 @@ import {
   reevaluateFit,
   listActivity, addManualActivity,
   generateInterviewPrep, listInterviewPreps, deleteInterviewPrep,
-  type Application, type CoverLetter, type ActivityLog, type InterviewPrep, type Job,
+  generateFollowUpEmail, listFollowUpEmails, deleteFollowUpEmail,
+  generateCompanyResearch, listCompanyResearch, deleteCompanyResearch,
+  type Application, type CoverLetter, type ActivityLog, type InterviewPrep,
+  type FollowUpEmail, type CompanyResearch, type Job,
 } from "@/lib/api";
 import { getPassword } from "@/lib/auth";
 
@@ -20,6 +23,8 @@ const EVENT_ICONS: Record<string, string> = {
   fit_evaluated: "◎",
   cover_letter_generated: "✉",
   interview_prep_generated: "?",
+  follow_up_email_generated: "↗",
+  company_research_generated: "⊙",
   manual: "✎",
 };
 
@@ -44,6 +49,8 @@ export default function ApplicationDetail() {
   const [coverLetters, setCoverLetters] = useState<CoverLetter[]>([]);
   const [activityLog, setActivityLog] = useState<ActivityLog[]>([]);
   const [interviewPreps, setInterviewPreps] = useState<InterviewPrep[]>([]);
+  const [followUpEmails, setFollowUpEmails] = useState<FollowUpEmail[]>([]);
+  const [companyResearch, setCompanyResearch] = useState<CompanyResearch[]>([]);
   const [loadingApp, setLoadingApp] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,9 +63,14 @@ export default function ApplicationDetail() {
   const [generatingLetter, setGeneratingLetter] = useState(false);
   const [reevaluating, setReevaluating] = useState(false);
   const [generatingPrep, setGeneratingPrep] = useState(false);
+  const [generatingEmail, setGeneratingEmail] = useState(false);
+  const [generatingResearch, setGeneratingResearch] = useState(false);
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [copiedEmailId, setCopiedEmailId] = useState<number | null>(null);
   const [notes, setNotes] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
+  const [tags, setTags] = useState("");
+  const [savingTags, setSavingTags] = useState(false);
   const [manualEntry, setManualEntry] = useState("");
   const [addingEntry, setAddingEntry] = useState(false);
 
@@ -68,13 +80,18 @@ export default function ApplicationDetail() {
       listCoverLetters(appId),
       listActivity(appId),
       listInterviewPreps(appId),
+      listFollowUpEmails(appId),
+      listCompanyResearch(appId),
     ])
-      .then(([a, cl, al, ip]) => {
+      .then(([a, cl, al, ip, fe, cr]) => {
         setApp(a);
         setNotes(a.notes ?? "");
+        setTags(a.tags ?? "");
         setCoverLetters(cl);
         setActivityLog(al);
         setInterviewPreps(ip);
+        setFollowUpEmails(fe);
+        setCompanyResearch(cr);
       })
       .catch(() => setError("Failed to load application."))
       .finally(() => setLoadingApp(false));
@@ -199,6 +216,62 @@ export default function ApplicationDetail() {
     } finally {
       setAddingEntry(false);
     }
+  }
+
+  // ── Tags ─────────────────────────────────────────────────────────────────
+  async function handleSaveTags() {
+    if (!app) return;
+    setSavingTags(true);
+    await updateApplication(app.id, { tags });
+    setSavingTags(false);
+  }
+
+  // ── Follow-up email ───────────────────────────────────────────────────────
+  async function handleGenerateEmail() {
+    setGeneratingEmail(true);
+    try {
+      const email = await generateFollowUpEmail(appId);
+      setFollowUpEmails((prev) => [email, ...prev]);
+      const al = await listActivity(appId);
+      setActivityLog(al);
+    } catch {
+      alert("Failed to generate follow-up email.");
+    } finally {
+      setGeneratingEmail(false);
+    }
+  }
+
+  async function handleDeleteEmail(emailId: number) {
+    if (!confirm("Delete this follow-up email?")) return;
+    await deleteFollowUpEmail(emailId);
+    setFollowUpEmails((prev) => prev.filter((e) => e.id !== emailId));
+  }
+
+  async function handleCopyEmail(email: FollowUpEmail) {
+    await navigator.clipboard.writeText(email.email_text);
+    setCopiedEmailId(email.id);
+    setTimeout(() => setCopiedEmailId(null), 2000);
+  }
+
+  // ── Company research ──────────────────────────────────────────────────────
+  async function handleGenerateResearch() {
+    setGeneratingResearch(true);
+    try {
+      const research = await generateCompanyResearch(appId);
+      setCompanyResearch((prev) => [research, ...prev]);
+      const al = await listActivity(appId);
+      setActivityLog(al);
+    } catch {
+      alert("Failed to generate company research.");
+    } finally {
+      setGeneratingResearch(false);
+    }
+  }
+
+  async function handleDeleteResearch(researchId: number) {
+    if (!confirm("Delete this company research?")) return;
+    await deleteCompanyResearch(researchId);
+    setCompanyResearch((prev) => prev.filter((r) => r.id !== researchId));
   }
 
   // ── Interview prep ────────────────────────────────────────────────────────
@@ -364,6 +437,77 @@ export default function ApplicationDetail() {
           className="mt-2 text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg transition-colors">
           {savingNotes ? "Saving..." : "Save Notes"}
         </button>
+      </Section>
+
+      {/* Tags */}
+      <Section title="Tags">
+        <p className="text-xs text-slate-500 mb-2">Comma-separated labels for your own organization (e.g. dream company, referral, stretch role)</p>
+        <input
+          value={tags}
+          onChange={(e) => setTags(e.target.value)}
+          placeholder="dream company, referral, remote only…"
+          className="w-full bg-[#0f1117] border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500"
+        />
+        {tags && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {tags.split(",").map((t) => t.trim()).filter(Boolean).map((t) => (
+              <span key={t} className="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full border border-slate-700">{t}</span>
+            ))}
+          </div>
+        )}
+        <button onClick={handleSaveTags} disabled={savingTags}
+          className="mt-2 text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg transition-colors">
+          {savingTags ? "Saving..." : "Save Tags"}
+        </button>
+      </Section>
+
+      {/* Company Research */}
+      <Section title="Company Research">
+        <button onClick={handleGenerateResearch} disabled={generatingResearch}
+          className="mb-4 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-slate-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          {generatingResearch ? "Researching…" : "Research Company"}
+        </button>
+        {companyResearch.length === 0 && !generatingResearch && <p className="text-slate-500 text-sm">No research generated yet.</p>}
+        <div className="flex flex-col gap-4">
+          {companyResearch.map((r, i) => (
+            <div key={r.id} className="border border-slate-700 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs text-slate-500">
+                  {new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                </span>
+                <button onClick={() => handleDeleteResearch(r.id)} className="text-xs text-slate-600 hover:text-red-400 transition-colors">Delete</button>
+              </div>
+              <div className="text-sm text-slate-300 whitespace-pre-line leading-relaxed">{r.summary_text}</div>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* Follow-up Emails */}
+      <Section title="Follow-up Emails">
+        <button onClick={handleGenerateEmail} disabled={generatingEmail}
+          className="mb-4 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-slate-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          {generatingEmail ? "Drafting…" : "Draft Follow-up Email"}
+        </button>
+        {followUpEmails.length === 0 && !generatingEmail && <p className="text-slate-500 text-sm">No follow-up emails drafted yet.</p>}
+        <div className="flex flex-col gap-4">
+          {followUpEmails.map((email) => (
+            <div key={email.id} className="border border-slate-700 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs text-slate-500">
+                  {new Date(email.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                </span>
+                <div className="flex gap-2">
+                  <button onClick={() => handleCopyEmail(email)} className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded-md transition-colors">
+                    {copiedEmailId === email.id ? "Copied!" : "Copy"}
+                  </button>
+                  <button onClick={() => handleDeleteEmail(email.id)} className="text-xs text-slate-600 hover:text-red-400 transition-colors">Delete</button>
+                </div>
+              </div>
+              <pre className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed font-sans">{email.email_text}</pre>
+            </div>
+          ))}
+        </div>
       </Section>
 
       {/* Activity Log */}

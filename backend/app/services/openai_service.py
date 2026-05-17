@@ -173,6 +173,95 @@ Writing style:
     }
 
 
+def generate_followup_email(job_data: dict, profile: str, days_since_applied: int) -> dict:
+    prompt = f"""Write a brief, professional follow-up email for a job application.
+
+Candidate profile:
+{profile}
+
+Job details:
+Company: {job_data.get('company', '')}
+Role: {job_data.get('role_title', '')}
+Days since applying: {days_since_applied}
+
+Requirements:
+- Subject line on the first line, prefixed with "Subject: "
+- Blank line after subject
+- Then the email body (3-4 sentences max)
+- Professional but warm tone — not pushy or desperate
+- Express continued interest and briefly reaffirm fit
+- Do not fabricate interview steps or interactions that haven't happened
+- Close with a clear but light call to action (happy to provide more info, available to chat, etc.)
+- Sign off with just the candidate's first name
+- Return only the subject line and email body — no extra commentary"""
+
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.5,
+        max_tokens=400,
+    )
+
+    usage = response.usage
+    text = response.choices[0].message.content.strip()
+    return {
+        "email_text": text,
+        "_usage": {
+            "model": MODEL,
+            "input_tokens": usage.prompt_tokens,
+            "output_tokens": usage.completion_tokens,
+            "estimated_cost": _cost(MODEL, usage.prompt_tokens, usage.completion_tokens),
+        },
+    }
+
+
+def generate_company_research(company: str, role_title: str) -> dict:
+    prompt = f"""Provide a concise company overview to help a job candidate prepare for an application or interview.
+
+Company: {company}
+Role applied for: {role_title}
+
+Cover these sections (use the exact headers):
+**What They Do**
+1-2 sentences on the company's core business and product/service.
+
+**Size & Stage**
+Approximate employee count, funding stage or public status, and founding year if known.
+
+**Tech Stack & Tools**
+Key technologies, languages, or platforms they are known to use (if relevant to this role).
+
+**Culture & Work Style**
+What the company is known for culturally — pace, values, remote/hybrid stance if known.
+
+**Interview Process**
+Typical interview stages for this type of role at this company, if known.
+
+**Useful Context for This Role**
+1-2 specific points that make this role or company relevant to the candidate given the role title.
+
+If you have limited or no information about this specific company, say so clearly rather than guessing. Return only the formatted overview."""
+
+    response = client.chat.completions.create(
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.3,
+        max_tokens=700,
+    )
+
+    usage = response.usage
+    text = response.choices[0].message.content.strip()
+    return {
+        "summary_text": text,
+        "_usage": {
+            "model": MODEL,
+            "input_tokens": usage.prompt_tokens,
+            "output_tokens": usage.completion_tokens,
+            "estimated_cost": _cost(MODEL, usage.prompt_tokens, usage.completion_tokens),
+        },
+    }
+
+
 def generate_interview_prep(job_data: dict, profile: str) -> dict:
     prompt = f"""You are a career coach preparing a candidate for a job interview.
 

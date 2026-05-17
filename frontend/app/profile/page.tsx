@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getProfile, updateProfile, reevaluateBulk, type CandidateProfile } from "@/lib/api";
+import { getProfile, updateProfile, reevaluateBulk, getStats, importResumePdf, type CandidateProfile } from "@/lib/api";
 
 type FormState = Omit<CandidateProfile, "id" | "updated_at">;
 
@@ -63,14 +63,20 @@ export default function ProfilePage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reevaluating, setReevaluating] = useState(false);
+  const [importedFields, setImportedFields] = useState<Partial<FormState> | null>(null);
+  const [importing, setImporting] = useState(false);
   const [reevalResult, setReevalResult] = useState<string | null>(null);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>(["Planned"]);
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+
+  const selectedAppCount = selectedStatuses.reduce((sum, s) => sum + (statusCounts[s] ?? 0), 0);
 
   useEffect(() => {
-    getProfile()
-      .then((p) => {
+    Promise.all([getProfile(), getStats()])
+      .then(([p, s]) => {
         const { id, updated_at, ...rest } = p;
         setForm(rest);
+        setStatusCounts(s.by_status);
       })
       .catch(() => setError("Failed to load profile."))
       .finally(() => setLoading(false));
@@ -99,6 +105,42 @@ export default function ProfilePage() {
     } finally {
       setReevaluating(false);
     }
+  }
+
+  async function handlePdfImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setImportedFields(null);
+    try {
+      const result = await importResumePdf(file);
+      setImportedFields(result.extracted as Partial<FormState>);
+    } catch {
+      alert("Failed to parse PDF. Make sure it contains selectable text.");
+    } finally {
+      setImporting(false);
+      e.target.value = "";
+    }
+  }
+
+  function applyImportedField(key: keyof FormState) {
+    if (!importedFields || !importedFields[key]) return;
+    setForm((prev) => prev ? { ...prev, [key]: importedFields[key] } : prev);
+    setSaved(false);
+  }
+
+  function applyAllImportedFields() {
+    if (!importedFields) return;
+    setForm((prev) => {
+      if (!prev) return prev;
+      const merged = { ...prev };
+      for (const key of Object.keys(importedFields) as (keyof FormState)[]) {
+        if (importedFields[key]) merged[key] = importedFields[key] as string;
+      }
+      return merged;
+    });
+    setSaved(false);
+    setImportedFields(null);
   }
 
   async function handleSave() {
@@ -204,10 +246,10 @@ export default function ProfilePage() {
         <div className="flex items-center gap-4">
           <button
             onClick={handleReevaluateBulk}
-            disabled={reevaluating || selectedStatuses.length === 0}
+            disabled={reevaluating || selectedStatuses.length === 0 || selectedAppCount === 0}
             className="bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-slate-200 text-sm font-medium px-5 py-2.5 rounded-lg transition-colors"
           >
-            {reevaluating ? "Re-evaluating…" : `Re-evaluate (${selectedStatuses.length} selected)`}
+            {reevaluating ? "Re-evaluating…" : `Re-evaluate (${selectedAppCount} application${selectedAppCount !== 1 ? "s" : ""})`}
           </button>
           {reevalResult && (
             <span className={`text-sm ${reevalResult.includes("failed") ? "text-red-400" : "text-green-400"}`}>
@@ -215,6 +257,41 @@ export default function ProfilePage() {
             </span>
           )}
         </div>
+      </div>
+
+      <div className="mt-8 border-t border-slate-800 pt-6">
+        <h2 className="text-sm font-semibold text-slate-300 mb-1">Import from Resume PDF</h2>
+        <p className="text-xs text-slate-500 mb-3">
+          Upload your resume to extract profile fields. You can review and selectively apply each field — nothing overwrites your current data until you choose to apply it.
+        </p>
+        <label className="inline-flex items-center gap-2 cursor-pointer bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          {importing ? "Parsing…" : "Upload Resume PDF"}
+          <input type="file" accept=".pdf" onChange={handlePdfImport} className="hidden" disabled={importing} />
+        </label>
+
+        {importedFields && (
+          <div className="mt-4 border border-slate-700 rounded-xl p-4 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-slate-300">Extracted Fields — review before applying</p>
+              <button onClick={applyAllImportedFields}
+                className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg transition-colors">
+                Apply All
+              </button>
+            </div>
+            {(Object.keys(importedFields) as (keyof FormState)[]).map((key) =>
+              importedFields[key] ? (
+                <div key={key} className="bg-[#0f1117] rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-slate-500 capitalize">{key.replace(/_/g, " ")}</span>
+                    <button onClick={() => applyImportedField(key)}
+                      className="text-xs text-blue-400 hover:text-blue-300 transition-colors">Apply →</button>
+                  </div>
+                  <p className="text-xs text-slate-400 line-clamp-3 whitespace-pre-line">{importedFields[key]}</p>
+                </div>
+              ) : null
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

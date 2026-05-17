@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getStats, type Stats } from "@/lib/api";
+import { getStats, getSkillGaps, type Stats, type SkillGap } from "@/lib/api";
 
 const STATUS_COLORS: Record<string, string> = {
   Planned: "bg-slate-600",
@@ -32,12 +32,13 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
 
 export default function StatsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [gaps, setGaps] = useState<{ gaps: SkillGap[]; total_jobs_analyzed: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getStats()
-      .then(setStats)
+    Promise.all([getStats(), getSkillGaps()])
+      .then(([s, g]) => { setStats(s); setGaps(g); })
       .catch(() => setError("Failed to load stats."))
       .finally(() => setLoading(false));
   }, []);
@@ -129,6 +130,30 @@ export default function StatsPage() {
           ))}
         </div>
       </div>
+
+      {/* Skill gaps */}
+      {gaps && gaps.gaps.length > 0 && (
+        <div className="bg-[#1a1d27] border border-slate-800 rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-1">Skill Gap Analysis</h2>
+          <p className="text-xs text-slate-500 mb-4">
+            Skills appearing in job requirements that aren't in your profile, ranked by frequency across {gaps.total_jobs_analyzed} jobs.
+          </p>
+          <div className="flex flex-col gap-2">
+            {gaps.gaps.map((g) => (
+              <div key={g.skill} className="flex items-center gap-3">
+                <span className="text-sm text-slate-300 flex-1">{g.skill}</span>
+                <div className="w-24 bg-slate-800 rounded-full h-2">
+                  <div
+                    className="h-2 rounded-full bg-orange-500"
+                    style={{ width: `${(g.count / gaps.gaps[0].count) * 100}%` }}
+                  />
+                </div>
+                <span className="text-xs text-slate-500 w-16 text-right">{g.count} job{g.count !== 1 ? "s" : ""}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

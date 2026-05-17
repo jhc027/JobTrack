@@ -1,3 +1,4 @@
+from collections import Counter
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app import models
 from app.database import get_db
+from app.services.profile_service import build_profile_text
 
 router = APIRouter(prefix="/stats", tags=["stats"])
 
@@ -61,3 +63,44 @@ def get_stats(db: Session = Depends(get_db)):
         "by_fit_level": by_fit_level,
         "weekly_activity": weekly,
     }
+
+
+@router.get("/skill-gaps")
+def get_skill_gaps(db: Session = Depends(get_db)):
+    profile = db.query(models.CandidateProfile).first()
+    profile_skills = set()
+    if profile:
+        for field in [profile.skills, profile.experience_summary]:
+            if field:
+                # Extract individual words/phrases from profile text
+                for word in field.lower().replace("\n", ",").split(","):
+                    cleaned = word.strip().strip(".-:")
+                    if len(cleaned) > 2:
+                        profile_skills.add(cleaned)
+
+    jobs = db.query(models.Job).all()
+    skill_counter: Counter = Counter()
+
+    for job in jobs:
+        for field in [job.required_skills, job.preferred_skills]:
+            if not field:
+                continue
+            for skill in field.split(","):
+                skill = skill.strip()
+                if len(skill) > 2:
+                    skill_lower = skill.lower()
+                    # Check if any profile skill contains this skill or vice versa
+                    in_profile = any(
+                        skill_lower in ps or ps in skill_lower
+                        for ps in profile_skills
+                    )
+                    if not in_profile:
+                        skill_counter[skill] += 1
+
+    gaps = [
+        {"skill": skill, "count": count}
+        for skill, count in skill_counter.most_common(20)
+        if count >= 2
+    ]
+
+    return {"gaps": gaps, "total_jobs_analyzed": len(jobs)}

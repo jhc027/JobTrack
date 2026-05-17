@@ -59,12 +59,15 @@ class Application(Base):
     follow_up_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     result: Mapped[str | None] = mapped_column(String(100))
     notes: Mapped[str | None] = mapped_column(Text)
+    tags: Mapped[str | None] = mapped_column(Text)  # comma-separated
 
     job: Mapped["Job"] = relationship(back_populates="applications")
     cover_letters: Mapped[list["CoverLetter"]] = relationship(back_populates="application", cascade="all, delete-orphan")
     llm_runs: Mapped[list["LlmRun"]] = relationship(back_populates="application", cascade="all, delete-orphan")
     activity_logs: Mapped[list["ActivityLog"]] = relationship(back_populates="application", cascade="all, delete-orphan")
     interview_preps: Mapped[list["InterviewPrep"]] = relationship(back_populates="application", cascade="all, delete-orphan")
+    follow_up_emails: Mapped[list["FollowUpEmail"]] = relationship(back_populates="application", cascade="all, delete-orphan")
+    company_research: Mapped[list["CompanyResearch"]] = relationship(back_populates="application", cascade="all, delete-orphan")
 
 
 class CoverLetter(Base):
@@ -94,6 +97,28 @@ class LlmRun(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     application: Mapped["Application"] = relationship(back_populates="llm_runs")
+
+
+class FollowUpEmail(Base):
+    __tablename__ = "follow_up_emails"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    application_id: Mapped[int] = mapped_column(ForeignKey("applications.id"))
+    email_text: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    application: Mapped["Application"] = relationship(back_populates="follow_up_emails")
+
+
+class CompanyResearch(Base):
+    __tablename__ = "company_research"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    application_id: Mapped[int] = mapped_column(ForeignKey("applications.id"))
+    summary_text: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    application: Mapped["Application"] = relationship(back_populates="company_research")
 
 
 class ActivityLog(Base):
