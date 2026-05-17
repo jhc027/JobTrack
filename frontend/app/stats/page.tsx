@@ -10,6 +10,7 @@ const STATUS_COLORS: Record<string, string> = {
   Offered: "bg-green-600",
   Rejected: "bg-red-600",
   Withdrawn: "bg-slate-700",
+  Ghosted: "bg-orange-700",
 };
 
 const FIT_COLORS: Record<string, string> = {

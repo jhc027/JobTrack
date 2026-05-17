@@ -12,7 +12,7 @@ import {
 } from "@/lib/api";
 import { getPassword } from "@/lib/auth";
 
-const STATUS_OPTIONS = ["Planned", "Applied", "Interviewing", "Offered", "Rejected", "Withdrawn"];
+const STATUS_OPTIONS = ["Planned", "Applied", "Interviewing", "Offered", "Rejected", "Withdrawn", "Ghosted"];
 
 const EVENT_ICONS: Record<string, string> = {
   job_added: "✦",

@@ -187,7 +187,7 @@ export default function ProfilePage() {
           Re-runs fit scoring on applications using your current profile. Select which statuses to include.
         </p>
         <div className="flex flex-wrap gap-2 mb-4">
-          {["Planned", "Applied", "Interviewing", "Offered", "Rejected", "Withdrawn"].map((status) => (
+          {["Planned", "Applied", "Interviewing", "Offered", "Rejected", "Withdrawn", "Ghosted"].map((status) => (
             <button
               key={status}
               onClick={() => toggleStatus(status)}

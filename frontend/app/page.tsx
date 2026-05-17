@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { listApplications, updateApplication, deleteJob, type Application } from "@/lib/api";
 
-const STATUS_OPTIONS = ["Planned", "Applied", "Interviewing", "Offered", "Rejected", "Withdrawn"];
+const STATUS_OPTIONS = ["Planned", "Applied", "Interviewing", "Offered", "Rejected", "Withdrawn", "Ghosted"];
 const FILTER_OPTIONS = ["All", ...STATUS_OPTIONS];
 
 const FIT_COLORS: Record<string, string> = {
@@ -21,7 +21,18 @@ const STATUS_COLORS: Record<string, string> = {
   Offered: "bg-green-900 text-green-300",
   Rejected: "bg-red-900 text-red-300",
   Withdrawn: "bg-slate-800 text-slate-400",
+  Ghosted: "bg-orange-950 text-orange-400",
 };
+
+function getAgingBadge(app: Application): { label: string; className: string } | null {
+  if (app.status !== "Applied") return null;
+  const since = app.date_applied ?? app.date_added;
+  const days = Math.floor((Date.now() - new Date(since).getTime()) / 86_400_000);
+  if (days >= 42) return { label: `${days}d · possibly ghosted`, className: "text-red-400 bg-red-950/50 border border-red-900" };
+  if (days >= 28) return { label: `${days}d · likely inactive`, className: "text-orange-400 bg-orange-950/50 border border-orange-900" };
+  if (days >= 14) return { label: `${days}d · no update`, className: "text-yellow-500 bg-yellow-950/50 border border-yellow-900" };
+  return null;
+}
 
 type SortKey = "date_desc" | "date_asc" | "company_asc" | "company_desc" | "fit_desc" | "fit_asc";
 
@@ -194,6 +205,12 @@ export default function Dashboard() {
                       {app.fit_level} {app.fit_score != null ? `(${app.fit_score.toFixed(1)})` : ""}
                     </span>
                   )}
+                  {(() => {
+                    const badge = getAgingBadge(app);
+                    return badge ? (
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${badge.className}`}>{badge.label}</span>
+                    ) : null;
+                  })()}
                 </div>
                 <p className="text-slate-400 text-sm mt-0.5">
                   {app.job?.company ?? "Unknown Company"}
