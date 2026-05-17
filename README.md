@@ -14,15 +14,39 @@ A personal, AI-powered job application tracker. Paste a job URL or description, 
 
 ## Features
 
+### Job Tracking
+
 - **Job ingestion** — paste a URL, raw job description, or both
 - **AI parsing** — extracts company, role, location, salary, skills, and responsibilities
+- **Editable fields** — correct any AI misreads directly on the job detail page
+- **Duplicate detection** — warns when a URL already exists in the tracker before submitting
+- **Date tracking** — date added and date applied shown on every dashboard card
+
+### AI Analysis
+
 - **Fit scoring** — scores your match 0–10 with a summary and what to emphasize
-- **Fit re-evaluation** — re-score any application after updating your profile
+- **Fit re-evaluation** — re-score any individual application after updating your profile
+- **Bulk re-evaluate** — re-score any combination of statuses from the Profile page
 - **Cover letter generation** — 3-paragraph letter tailored to the role and your profile
+- **Interview prep** — generates 10 role-specific interview questions with candidate-tailored tips; saved per application
 - **Export** — download cover letters as `.docx` or `.pdf`
-- **Dashboard** — search, filter by status, and sort by date, company, or fit score
-- **Candidate profile editor** — update your resume details at `/profile`; all future LLM calls use the latest version
-- **Bulk re-evaluate** — re-score all Planned applications at once from the Profile page after updating your resume
+
+### Dashboard & Navigation
+
+- **Search** — filter by company, role, location, skills, or notes
+- **Status filters** — filter by Planned, Applied, Interviewing, Offered, Rejected, Withdrawn, or Ghosted
+- **Sort** — by date added, company name, or fit score
+- **Aging badges** — Applied cards are flagged after 14 days (yellow), 28 days (orange), and 42 days (red / possibly ghosted)
+- **Ghosted status** — distinct from Rejected; marks applications that went silent
+
+### Activity & Stats
+
+- **Activity log** — per-application timeline of status changes, AI actions, and manual notes
+- **Stats dashboard** — application counts by status and fit level, average fit score, weekly activity chart
+
+### Profile
+
+- **Candidate profile editor** — update resume details at `/profile`; all LLM calls use the latest version
 - **LLM cost tracking** — token usage and estimated cost logged per run
 
 ## Running Locally
