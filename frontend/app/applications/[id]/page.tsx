@@ -452,33 +452,6 @@ export default function ApplicationDetail() {
         </Section>
       )}
 
-      {/* Cover Letters — first action */}
-      <Section title="Cover Letters" color="green">
-        <button onClick={handleGenerateLetter} disabled={generatingLetter}
-          className="mb-4 bg-green-700 hover:bg-green-600 disabled:bg-slate-700 disabled:text-slate-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-          {generatingLetter ? "Generating…" : "Generate Cover Letter"}
-        </button>
-        {coverLetters.length === 0 && !generatingLetter && <p className="text-slate-500 text-sm">No cover letters yet.</p>}
-        <div className="flex flex-col gap-4">
-          {coverLetters.map((letter, i) => (
-            <div key={letter.id} className="border border-slate-700 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs text-slate-500">Version {coverLetters.length - i} · {new Date(letter.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
-                <div className="flex gap-2 flex-wrap">
-                  <button onClick={() => handleCopy(letter)} className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded-md transition-colors">
-                    {copiedId === letter.id ? "Copied!" : "Copy"}
-                  </button>
-                  <button onClick={() => handleExport(letter.id, "docx")} className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded-md transition-colors">.docx</button>
-                  <button onClick={() => handleExport(letter.id, "pdf")} className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded-md transition-colors">.pdf</button>
-                  <button onClick={() => handleDeleteLetter(letter.id)} className="text-xs text-slate-600 hover:text-red-400 transition-colors">Delete</button>
-                </div>
-              </div>
-              <p className="text-sm text-slate-300 whitespace-pre-line leading-relaxed">{letter.body_text}</p>
-            </div>
-          ))}
-        </div>
-      </Section>
-
       {/* Activity Log — frequent reference */}
       <Section title="Activity Log" color="green">
         <div className="flex flex-col gap-2 mb-4">
@@ -507,6 +480,33 @@ export default function ApplicationDetail() {
             className="text-xs bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-600 text-slate-200 px-3 py-1.5 rounded-lg transition-colors shrink-0">
             Add
           </button>
+        </div>
+      </Section>
+
+      {/* Cover Letters */}
+      <Section title="Cover Letters" color="green">
+        <button onClick={handleGenerateLetter} disabled={generatingLetter}
+          className="mb-4 bg-green-700 hover:bg-green-600 disabled:bg-slate-700 disabled:text-slate-500 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+          {generatingLetter ? "Generating…" : "Generate Cover Letter"}
+        </button>
+        {coverLetters.length === 0 && !generatingLetter && <p className="text-slate-500 text-sm">No cover letters yet.</p>}
+        <div className="flex flex-col gap-4">
+          {coverLetters.map((letter, i) => (
+            <div key={letter.id} className="border border-slate-700 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs text-slate-500">Version {coverLetters.length - i} · {new Date(letter.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+                <div className="flex gap-2 flex-wrap">
+                  <button onClick={() => handleCopy(letter)} className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded-md transition-colors">
+                    {copiedId === letter.id ? "Copied!" : "Copy"}
+                  </button>
+                  <button onClick={() => handleExport(letter.id, "docx")} className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded-md transition-colors">.docx</button>
+                  <button onClick={() => handleExport(letter.id, "pdf")} className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded-md transition-colors">.pdf</button>
+                  <button onClick={() => handleDeleteLetter(letter.id)} className="text-xs text-slate-600 hover:text-red-400 transition-colors">Delete</button>
+                </div>
+              </div>
+              <p className="text-sm text-slate-300 whitespace-pre-line leading-relaxed">{letter.body_text}</p>
+            </div>
+          ))}
         </div>
       </Section>
 
