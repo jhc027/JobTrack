@@ -28,7 +28,7 @@ class Job(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     company: Mapped[str | None] = mapped_column(String(255))
     role_title: Mapped[str | None] = mapped_column(String(255))
-    location: Mapped[str | None] = mapped_column(String(255))
+    location: Mapped[str | None] = mapped_column(Text)
     remote_type: Mapped[str | None] = mapped_column(String(50))  # Remote, Hybrid, On-site, Unknown
     salary: Mapped[str | None] = mapped_column(String(255))
     job_url: Mapped[str | None] = mapped_column(Text)
